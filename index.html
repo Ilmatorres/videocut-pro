@@ -4,226 +4,349 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VideoCut Pro - Editor de Video Online</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d0d12; color: #e0e0e0; min-height: 100vh; overflow-x: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #09090b; color: #e4e4e7; min-height: 100vh; overflow-x: hidden;
     }
 
     /* Header */
     .header {
-      background: #141420; padding: 12px 24px; display: flex; justify-content: space-between;
-      align-items: center; border-bottom: 1px solid #ffffff10;
+      background: rgba(18,18,22,0.8); backdrop-filter: blur(20px); padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 60;
     }
-    .logo { font-size: 1.2rem; font-weight: 700; color: #fff; }
-    .logo span { color: #ff4d6a; }
-    .header-actions { display: flex; gap: 8px; }
+    .logo { font-size: 1.2rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, #e11d48, #f43f5e); display: flex;
+      align-items: center; justify-content: center; font-size: 0.9rem;
+    }
+    .logo-text span { color: #f43f5e; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
     .btn-header {
-      padding: 8px 18px; border: 1px solid #ffffff15; border-radius: 8px;
-      background: transparent; color: #aaa; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;
+      padding: 9px 18px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+      background: rgba(255,255,255,0.04); color: #a1a1aa; font-size: 0.8rem; cursor: pointer;
+      transition: all 0.25s; font-family: 'Inter', sans-serif; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
     }
-    .btn-header:hover { border-color: #ff4d6a; color: #ff4d6a; }
+    .btn-header:hover { border-color: rgba(255,255,255,0.15); color: #fff; background: rgba(255,255,255,0.08); }
+    .btn-header svg { width: 16px; height: 16px; }
     .btn-export {
-      padding: 8px 18px; border: none; border-radius: 8px; border-radius: 8px;
-      background: linear-gradient(135deg, #ff4d6a, #ff2d50); color: #fff;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border-radius: 8px;
+      padding: 9px 20px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #e11d48, #f43f5e); color: #fff;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.25s;
+      font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px;
     }
-    .btn-export:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,77,106,0.4); }
+    .btn-export:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(225,29,72,0.35); }
+    .btn-export svg { width: 16px; height: 16px; }
 
     /* Main Layout */
-    .editor-layout {
-      display: grid; grid-template-columns: 260px 1fr 260px; height: calc(100vh - 52px);
-    }
+    .editor-layout { display: grid; grid-template-columns: 56px 1fr 280px; height: calc(100vh - 54px); }
 
-    /* Sidebar Left - Tools */
-    .sidebar {
-      background: #141420; border-right: 1px solid #ffffff10; padding: 16px;
-      overflow-y: auto;
+    /* Icon Toolbar Left */
+    .icon-toolbar {
+      background: rgba(18,18,22,0.9); border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 4px;
     }
-    .sidebar h3 {
-      font-size: 0.7rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 2px;
-      margin-bottom: 12px; margin-top: 16px;
+    .icon-btn {
+      width: 42px; height: 42px; border: none; border-radius: 12px; background: transparent;
+      color: #71717a; cursor: pointer; transition: all 0.25s; display: flex;
+      align-items: center; justify-content: center; position: relative;
     }
-    .sidebar h3:first-child { margin-top: 0; }
-    .tool-btn {
-      width: 100%; padding: 10px 14px; border: 1px solid #ffffff10; border-radius: 10px;
-      background: rgba(255,255,255,0.03); color: #ccc; font-size: 0.85rem; cursor: pointer;
-      transition: all 0.3s; margin-bottom: 6px; text-align: left; display: flex;
-      align-items: center; gap: 10px;
+    .icon-btn svg { width: 20px; height: 20px; }
+    .icon-btn:hover { background: rgba(255,255,255,0.06); color: #e4e4e7; }
+    .icon-btn.active { background: rgba(225,29,72,0.12); color: #f43f5e; }
+    .icon-btn.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; background: #f43f5e; border-radius: 0 3px 3px 0;
     }
-    .tool-btn:hover { border-color: #ff4d6a44; background: rgba(255,77,106,0.08); color: #fff; }
-    .tool-btn.active { border-color: #ff4d6a; background: rgba(255,77,106,0.12); color: #ff4d6a; }
-    .tool-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+    .icon-btn-label {
+      font-size: 0.55rem; color: #52525b; margin-top: 1px; text-align: center;
+      letter-spacing: 0.5px; font-weight: 500;
+    }
+    .toolbar-divider { width: 24px; height: 1px; background: rgba(255,255,255,0.06); margin: 6px 0; }
 
     /* Center - Preview */
     .preview-area {
-      background: #0a0a0f; display: flex; flex-direction: column; align-items: center;
+      background: #09090b; display: flex; flex-direction: column; align-items: center;
       justify-content: center; position: relative; overflow: hidden;
     }
     .upload-zone {
-      text-align: center; padding: 60px; border: 2px dashed #ffffff15; border-radius: 20px;
-      cursor: pointer; transition: all 0.3s; max-width: 500px;
+      text-align: center; padding: 60px 50px; border: 2px dashed rgba(255,255,255,0.08);
+      border-radius: 24px; cursor: pointer; transition: all 0.3s; max-width: 480px;
+      background: rgba(255,255,255,0.02);
     }
-    .upload-zone:hover { border-color: #ff4d6a44; background: rgba(255,77,106,0.04); }
-    .upload-zone .icon { font-size: 3.5rem; margin-bottom: 15px; }
-    .upload-zone h3 { color: #fff; font-weight: 400; margin-bottom: 8px; }
-    .upload-zone p { color: #ffffff44; font-size: 0.85rem; }
-    .upload-zone .formats { color: #ffffff33; font-size: 0.75rem; margin-top: 12px; }
+    .upload-zone:hover { border-color: rgba(225,29,72,0.3); background: rgba(225,29,72,0.03); }
+    .upload-icon {
+      width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 20px;
+      background: linear-gradient(135deg, rgba(225,29,72,0.15), rgba(225,29,72,0.05));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .upload-icon svg { width: 28px; height: 28px; color: #f43f5e; }
+    .upload-zone h3 { color: #fff; font-weight: 500; font-size: 1.1rem; margin-bottom: 8px; }
+    .upload-zone p { color: #52525b; font-size: 0.85rem; line-height: 1.5; }
+    .upload-zone .formats {
+      display: flex; gap: 6px; justify-content: center; margin-top: 16px; flex-wrap: wrap;
+    }
+    .format-tag {
+      padding: 4px 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; font-size: 0.7rem; color: #71717a; font-family: 'JetBrains Mono', monospace;
+    }
 
     #videoPreview {
-      display: none; max-width: 100%; max-height: calc(100% - 20px); border-radius: 8px;
+      display: none; max-width: 100%; max-height: calc(100% - 20px); border-radius: 12px;
       background: #000;
     }
     .video-container { display: none; width: 100%; height: 100%; position: relative; }
-    .video-container.show { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .video-container.show { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; }
 
-    /* Text overlay */
     .text-overlay {
       position: absolute; color: #fff; font-size: 2rem; font-weight: 700; cursor: move;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8); user-select: none; display: none;
-      padding: 8px 16px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.7); user-select: none; display: none; padding: 8px 16px;
     }
     .text-overlay.show { display: block; }
 
     /* Player Controls */
     .player-controls {
-      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 8px; align-items: center; background: rgba(0,0,0,0.7);
-      padding: 8px 16px; border-radius: 12px; backdrop-filter: blur(10px);
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; align-items: center;
+      background: rgba(9,9,11,0.85); backdrop-filter: blur(16px);
+      padding: 10px 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06);
     }
     .ctrl-btn {
-      width: 36px; height: 36px; border: none; border-radius: 8px;
-      background: rgba(255,255,255,0.1); color: #fff; font-size: 1rem;
+      width: 38px; height: 38px; border: none; border-radius: 10px;
+      background: transparent; color: #a1a1aa; font-size: 1rem;
       cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
     }
-    .ctrl-btn:hover { background: #ff4d6a; }
-    .time-display { color: #ffffff88; font-size: 0.75rem; font-family: monospace; min-width: 100px; text-align: center; }
+    .ctrl-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .ctrl-btn.play-main { background: #e11d48; color: #fff; border-radius: 50%; }
+    .ctrl-btn.play-main:hover { background: #f43f5e; transform: scale(1.05); }
+    .time-display {
+      color: #71717a; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
+      min-width: 100px; text-align: center;
+    }
+    .vol-slider { width: 60px; accent-color: #e11d48; height: 3px; }
 
-    /* Sidebar Right - Properties */
+    /* Right Sidebar - Properties */
     .properties {
-      background: #141420; border-left: 1px solid #ffffff10; padding: 16px; overflow-y: auto;
+      background: rgba(18,18,22,0.9); border-left: 1px solid rgba(255,255,255,0.06);
+      padding: 20px 16px; overflow-y: auto;
     }
-    .prop-section { margin-bottom: 20px; }
+    .properties::-webkit-scrollbar { width: 4px; }
+    .properties::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+    .prop-section { margin-bottom: 24px; }
     .prop-section h3 {
-      font-size: 0.7rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 2px;
-      margin-bottom: 12px;
+      font-size: 0.65rem; color: #52525b; text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 14px; font-weight: 600;
     }
-    .prop-row { margin-bottom: 10px; }
-    .prop-row label { font-size: 0.75rem; color: #ffffff55; display: block; margin-bottom: 4px; }
-    .prop-row input[type="text"], .prop-row input[type="number"], .prop-row select, .prop-row input[type="color"] {
-      width: 100%; padding: 8px 12px; border: 1px solid #ffffff12; border-radius: 8px;
-      background: rgba(255,255,255,0.05); color: #fff; font-size: 0.85rem; outline: none;
+    .prop-row { margin-bottom: 12px; }
+    .prop-row label {
+      font-size: 0.75rem; color: #71717a; display: block; margin-bottom: 6px; font-weight: 500;
     }
-    .prop-row input:focus, .prop-row select:focus { border-color: #ff4d6a; }
-    .prop-row input[type="range"] { width: 100%; accent-color: #ff4d6a; }
-    .prop-row input[type="color"] { height: 36px; padding: 4px; cursor: pointer; }
+    .prop-row input[type="text"], .prop-row input[type="number"], .prop-row select {
+      width: 100%; padding: 9px 12px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+      background: rgba(255,255,255,0.04); color: #e4e4e7; font-size: 0.85rem; outline: none;
+      font-family: 'Inter', sans-serif; transition: border-color 0.2s;
+    }
+    .prop-row input:focus, .prop-row select:focus { border-color: #e11d48; }
+    .prop-row input[type="range"] { width: 100%; accent-color: #e11d48; height: 4px; }
+    .prop-row input[type="color"] {
+      width: 100%; height: 38px; padding: 4px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+    }
+    .prop-row select option { background: #18181b; color: #e4e4e7; }
+
+    .action-btn {
+      width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+      background: rgba(255,255,255,0.04); color: #a1a1aa; font-size: 0.8rem; cursor: pointer;
+      transition: all 0.25s; font-family: 'Inter', sans-serif; font-weight: 500; margin-top: 8px;
+    }
+    .action-btn:hover { background: rgba(225,29,72,0.1); color: #f43f5e; border-color: rgba(225,29,72,0.2); }
+
+    .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .filter-btn {
+      padding: 9px 6px; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
+      background: rgba(255,255,255,0.03); color: #a1a1aa; font-size: 0.75rem; cursor: pointer;
+      transition: all 0.2s; font-family: 'Inter', sans-serif; font-weight: 500; text-align: center;
+    }
+    .filter-btn:hover { background: rgba(225,29,72,0.08); color: #f43f5e; border-color: rgba(225,29,72,0.15); }
+
+    .speed-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .speed-chip {
+      padding: 7px 14px; border: 1px solid rgba(255,255,255,0.06); border-radius: 20px;
+      background: rgba(255,255,255,0.03); color: #71717a; font-size: 0.75rem; cursor: pointer;
+      transition: all 0.2s; font-weight: 500; font-family: 'JetBrains Mono', monospace;
+    }
+    .speed-chip:hover { border-color: #e11d48; color: #f43f5e; }
+
+    /* Video Info */
+    .video-info {
+      display: flex; gap: 12px; padding: 10px 14px; margin-bottom: 16px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; font-size: 0.7rem; color: #52525b; flex-wrap: wrap;
+      font-family: 'JetBrains Mono', monospace;
+    }
 
     /* Timeline */
     .timeline-area {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 140px;
-      background: #141420; border-top: 1px solid #ffffff10; padding: 12px 20px;
+      position: fixed; bottom: 0; left: 0; right: 0; height: 130px;
+      background: rgba(18,18,22,0.95); backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.06); padding: 14px 24px;
       display: none; z-index: 50;
     }
     .timeline-area.show { display: block; }
-    .timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .timeline-header h4 { font-size: 0.75rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 2px; }
+    .timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .timeline-header h4 {
+      font-size: 0.65rem; color: #52525b; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
+    }
+    .trim-info { display: flex; gap: 16px; font-size: 0.75rem; color: #52525b; font-family: 'JetBrains Mono', monospace; }
+    .trim-info strong { color: #f43f5e; }
 
     .timeline-track {
-      position: relative; height: 50px; background: #0d0d12; border-radius: 8px;
-      overflow: hidden; cursor: pointer;
+      position: relative; height: 52px; background: rgba(255,255,255,0.03);
+      border-radius: 12px; overflow: hidden; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.04);
     }
     .timeline-clip {
-      position: absolute; top: 4px; height: 42px; background: linear-gradient(135deg, #ff4d6a33, #ff4d6a11);
-      border: 1px solid #ff4d6a44; border-radius: 6px; display: flex; align-items: center;
-      padding: 0 10px; font-size: 0.75rem; color: #ff4d6a;
+      position: absolute; top: 4px; height: 44px;
+      background: linear-gradient(135deg, rgba(225,29,72,0.2), rgba(225,29,72,0.08));
+      border: 1px solid rgba(225,29,72,0.25); border-radius: 8px;
+      display: flex; align-items: center; padding: 0 14px;
+      font-size: 0.7rem; color: #f43f5e; font-weight: 500;
     }
     .timeline-playhead {
-      position: absolute; top: 0; width: 2px; height: 100%; background: #ff4d6a;
-      z-index: 10; pointer-events: none; transition: left 0.1s linear;
+      position: absolute; top: 0; width: 2px; height: 100%;
+      background: #e11d48; z-index: 10; pointer-events: none;
+      box-shadow: 0 0 8px rgba(225,29,72,0.5);
     }
-
-    /* Trim handles */
+    .timeline-playhead::before {
+      content: ''; position: absolute; top: -4px; left: -5px;
+      width: 12px; height: 12px; background: #e11d48;
+      border-radius: 50%; border: 2px solid #09090b;
+    }
     .trim-handle {
-      position: absolute; top: 0; width: 12px; height: 100%; cursor: col-resize;
+      position: absolute; top: 0; width: 14px; height: 100%; cursor: col-resize;
       z-index: 20; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
     }
-    .trim-handle-left { left: 0; background: linear-gradient(90deg, #ff4d6a, transparent); border-radius: 6px 0 0 6px; }
-    .trim-handle-right { right: 0; background: linear-gradient(-90deg, #ff4d6a, transparent); border-radius: 0 6px 6px 0; }
-    .trim-handle::after { content: '||'; font-size: 0.5rem; color: #fff; }
+    .trim-handle-left { left: 0; background: rgba(225,29,72,0.5); border-radius: 8px 0 0 8px; }
+    .trim-handle-right { right: 0; background: rgba(225,29,72,0.5); border-radius: 0 8px 8px 0; }
+    .trim-handle:hover { background: rgba(225,29,72,0.8); }
+    .trim-handle::after { content: '||'; font-size: 0.5rem; color: #fff; font-weight: 700; }
 
-    .trim-info {
-      display: flex; gap: 15px; margin-top: 8px; font-size: 0.8rem; color: #ffffff55;
-    }
-    .trim-info span strong { color: #ff4d6a; }
-
-    /* Info bar */
-    .video-info {
-      display: flex; gap: 15px; padding: 8px 0; font-size: 0.75rem; color: #ffffff44;
-    }
-
-    /* Responsive */
     @media (max-width: 900px) {
       .editor-layout { grid-template-columns: 1fr; }
-      .sidebar, .properties { display: none; }
-      .timeline-area { height: 120px; }
+      .icon-toolbar, .properties { display: none; }
+      .timeline-area { height: 110px; }
     }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">Video<span>Cut</span> Pro</div>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </div>
+    <div class="logo-text">Video<span>Cut</span> Pro</div>
+  </div>
   <div class="header-actions">
-    <button class="btn-header" onclick="document.getElementById('fileInput').click()">Abrir Video</button>
-    <button class="btn-export" onclick="exportVideo()">Exportar</button>
+    <button class="btn-header" onclick="document.getElementById('fileInput').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar
+    </button>
+    <button class="btn-export" onclick="exportVideo()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar
+    </button>
   </div>
 </div>
 
 <input type="file" id="fileInput" accept="video/*" style="display:none" onchange="loadVideo(event)">
 
-<div class="editor-layout" style="height: calc(100vh - 52px);">
+<div class="editor-layout">
 
-  <!-- LEFT SIDEBAR -->
-  <div class="sidebar">
-    <h3>Ferramentas</h3>
-    <button class="tool-btn active" onclick="setTool('trim', this)"><span class="tool-icon">&#9986;</span> Cortar / Aparar</button>
-    <button class="tool-btn" onclick="setTool('text', this)"><span class="tool-icon">T</span> Adicionar Texto</button>
-    <button class="tool-btn" onclick="setTool('speed', this)"><span class="tool-icon">&#9654;</span> Velocidade</button>
-    <button class="tool-btn" onclick="setTool('filter', this)"><span class="tool-icon">&#127912;</span> Filtros</button>
-    <button class="tool-btn" onclick="setTool('audio', this)"><span class="tool-icon">&#127925;</span> Audio</button>
-
-    <h3>Informacoes</h3>
-    <div class="video-info" id="videoInfo">
-      <span>Nenhum video carregado</span>
+  <!-- ICON TOOLBAR LEFT -->
+  <div class="icon-toolbar">
+    <div>
+      <button class="icon-btn active" onclick="setTool('trim', this)" title="Cortar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+      </button>
+      <div class="icon-btn-label">Cortar</div>
+    </div>
+    <div>
+      <button class="icon-btn" onclick="setTool('text', this)" title="Texto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      </button>
+      <div class="icon-btn-label">Texto</div>
+    </div>
+    <div>
+      <button class="icon-btn" onclick="setTool('speed', this)" title="Velocidade">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </button>
+      <div class="icon-btn-label">Veloc.</div>
+    </div>
+    <div class="toolbar-divider"></div>
+    <div>
+      <button class="icon-btn" onclick="setTool('filter', this)" title="Filtros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+      </button>
+      <div class="icon-btn-label">Filtros</div>
+    </div>
+    <div>
+      <button class="icon-btn" onclick="setTool('audio', this)" title="Audio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
+      </button>
+      <div class="icon-btn-label">Audio</div>
     </div>
   </div>
 
   <!-- CENTER - PREVIEW -->
   <div class="preview-area" id="previewArea">
     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-      <div class="icon">&#127916;</div>
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>
+      </div>
       <h3>Arraste ou clique para importar</h3>
-      <p>Selecione um video do seu computador</p>
-      <div class="formats">MP4 | MOV | AVI | WebM | MKV</div>
+      <p>Selecione um video do seu computador para comecar a editar</p>
+      <div class="formats">
+        <span class="format-tag">MP4</span>
+        <span class="format-tag">MOV</span>
+        <span class="format-tag">AVI</span>
+        <span class="format-tag">WebM</span>
+        <span class="format-tag">MKV</span>
+      </div>
     </div>
 
     <div class="video-container" id="videoContainer">
       <video id="videoPreview" onclick="togglePlay()"></video>
       <div class="text-overlay" id="textOverlay">Seu Texto</div>
       <div class="player-controls">
-        <button class="ctrl-btn" onclick="skipTime(-5)">&#9194;</button>
-        <button class="ctrl-btn" onclick="togglePlay()" id="playBtn">&#9654;</button>
-        <button class="ctrl-btn" onclick="skipTime(5)">&#9193;</button>
+        <button class="ctrl-btn" onclick="skipTime(-5)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+        </button>
+        <button class="ctrl-btn play-main" onclick="togglePlay()" id="playBtn">&#9654;</button>
+        <button class="ctrl-btn" onclick="skipTime(5)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        </button>
         <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
-        <button class="ctrl-btn" onclick="toggleMute()" id="muteBtn">&#128264;</button>
-        <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" style="width:60px;accent-color:#ff4d6a;" onchange="setVolume(this.value)">
+        <button class="ctrl-btn" onclick="toggleMute()" id="muteBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+        </button>
+        <input type="range" class="vol-slider" id="volumeSlider" min="0" max="1" step="0.1" value="1" onchange="setVolume(this.value)">
       </div>
     </div>
   </div>
 
   <!-- RIGHT SIDEBAR - PROPERTIES -->
   <div class="properties">
+    <div class="video-info" id="videoInfo">Nenhum video carregado</div>
+
     <!-- Trim Properties -->
     <div class="prop-section" id="propTrim">
       <h3>Cortar Video</h3>
@@ -237,14 +360,14 @@
       </div>
       <div class="prop-row">
         <label>Duracao do corte</label>
-        <input type="text" id="trimDuration" readonly style="color:#ff4d6a;">
+        <input type="text" id="trimDuration" readonly style="color:#f43f5e;">
       </div>
-      <button class="tool-btn" onclick="previewTrim()" style="margin-top:10px;justify-content:center;">&#9654; Pre-visualizar Corte</button>
+      <button class="action-btn" onclick="previewTrim()">&#9654; Pre-visualizar Corte</button>
     </div>
 
     <!-- Text Properties -->
     <div class="prop-section" id="propText" style="display:none;">
-      <h3>Texto</h3>
+      <h3>Adicionar Texto</h3>
       <div class="prop-row">
         <label>Conteudo</label>
         <input type="text" id="textContent" value="Seu Texto" oninput="updateText()">
@@ -260,56 +383,57 @@
       <div class="prop-row">
         <label>Fonte</label>
         <select id="textFont" onchange="updateText()">
+          <option value="'Inter', sans-serif">Inter</option>
           <option value="Arial, sans-serif">Arial</option>
           <option value="'Georgia', serif">Georgia</option>
-          <option value="'Courier New', monospace">Courier New</option>
           <option value="Impact, sans-serif">Impact</option>
-          <option value="'Comic Sans MS', cursive">Comic Sans</option>
+          <option value="'Courier New', monospace">Courier New</option>
         </select>
       </div>
       <div class="prop-row">
-        <label>Fundo do texto</label>
+        <label>Fundo</label>
         <select id="textBg" onchange="updateText()">
           <option value="none">Nenhum</option>
-          <option value="rgba(0,0,0,0.5)">Preto semi-transparente</option>
-          <option value="rgba(255,77,106,0.7)">Vermelho</option>
-          <option value="rgba(0,0,0,0.8)">Preto forte</option>
+          <option value="rgba(0,0,0,0.6)">Preto transparente</option>
+          <option value="rgba(225,29,72,0.7)">Vermelho</option>
+          <option value="rgba(0,0,0,0.85)">Preto forte</option>
         </select>
       </div>
-      <button class="tool-btn" onclick="toggleTextOverlay()" style="margin-top:10px;justify-content:center;" id="textToggleBtn">Mostrar Texto</button>
+      <button class="action-btn" onclick="toggleTextOverlay()" id="textToggleBtn">Mostrar Texto</button>
     </div>
 
     <!-- Speed Properties -->
     <div class="prop-section" id="propSpeed" style="display:none;">
       <h3>Velocidade</h3>
       <div class="prop-row">
-        <label>Velocidade: <strong id="speedLabel">1.0x</strong></label>
+        <label>Velocidade: <strong id="speedLabel" style="color:#f43f5e;">1.0x</strong></label>
         <input type="range" id="speedSlider" min="0.25" max="3" step="0.25" value="1" oninput="setSpeed(this.value)">
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(0.5)">0.5x</button>
-        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(1)">1x</button>
-        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(1.5)">1.5x</button>
-        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(2)">2x</button>
+      <div class="speed-chips">
+        <button class="speed-chip" onclick="setSpeed(0.5)">0.5x</button>
+        <button class="speed-chip" onclick="setSpeed(1)">1.0x</button>
+        <button class="speed-chip" onclick="setSpeed(1.5)">1.5x</button>
+        <button class="speed-chip" onclick="setSpeed(2)">2.0x</button>
+        <button class="speed-chip" onclick="setSpeed(3)">3.0x</button>
       </div>
     </div>
 
     <!-- Filter Properties -->
     <div class="prop-section" id="propFilter" style="display:none;">
       <h3>Filtros</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('none')">Normal</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('grayscale(100%)')">P&B</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('sepia(100%)')">Sepia</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('contrast(150%)')">Contraste</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('brightness(130%)')">Brilho+</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('brightness(70%)')">Brilho-</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('saturate(200%)')">Saturacao+</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('hue-rotate(90deg)')">Hue Rotate</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('invert(100%)')">Inverter</button>
-        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('blur(2px)')">Blur</button>
+      <div class="filter-grid">
+        <button class="filter-btn" onclick="setFilter('none')">Normal</button>
+        <button class="filter-btn" onclick="setFilter('grayscale(100%)')">P&B</button>
+        <button class="filter-btn" onclick="setFilter('sepia(100%)')">Sepia</button>
+        <button class="filter-btn" onclick="setFilter('contrast(150%)')">Contraste</button>
+        <button class="filter-btn" onclick="setFilter('brightness(130%)')">Brilho +</button>
+        <button class="filter-btn" onclick="setFilter('brightness(70%)')">Brilho -</button>
+        <button class="filter-btn" onclick="setFilter('saturate(200%)')">Saturacao</button>
+        <button class="filter-btn" onclick="setFilter('hue-rotate(90deg)')">Hue Shift</button>
+        <button class="filter-btn" onclick="setFilter('invert(100%)')">Inverter</button>
+        <button class="filter-btn" onclick="setFilter('blur(2px)')">Blur</button>
       </div>
-      <div class="prop-row" style="margin-top:12px;">
+      <div class="prop-row" style="margin-top:16px;">
         <label>Brilho</label>
         <input type="range" id="brightnessSlider" min="50" max="200" value="100" oninput="applyCustomFilter()">
       </div>
@@ -327,10 +451,10 @@
     <div class="prop-section" id="propAudio" style="display:none;">
       <h3>Audio</h3>
       <div class="prop-row">
-        <label>Volume: <strong id="audioVolLabel">100%</strong></label>
+        <label>Volume: <strong id="audioVolLabel" style="color:#f43f5e;">100%</strong></label>
         <input type="range" id="audioVolSlider" min="0" max="100" value="100" oninput="setAudioVol(this.value)">
       </div>
-      <button class="tool-btn" onclick="toggleMute()" style="margin-top:8px;justify-content:center;" id="muteToggleBtn">&#128264; Silenciar</button>
+      <button class="action-btn" onclick="toggleMute()" id="muteToggleBtn">Silenciar Audio</button>
     </div>
   </div>
 </div>
@@ -339,10 +463,10 @@
 <div class="timeline-area" id="timelineArea">
   <div class="timeline-header">
     <h4>Timeline</h4>
-    <div class="trim-info" id="trimInfo">
-      <span>Inicio: <strong id="tlStart">00:00</strong></span>
-      <span>Fim: <strong id="tlEnd">00:00</strong></span>
-      <span>Duracao: <strong id="tlDur">00:00</strong></span>
+    <div class="trim-info">
+      <span>IN <strong id="tlStart">00:00</strong></span>
+      <span>OUT <strong id="tlEnd">00:00</strong></span>
+      <span>DUR <strong id="tlDur">00:00</strong></span>
     </div>
   </div>
   <div class="timeline-track" id="timelineTrack" onmousedown="timelineSeek(event)">
@@ -359,331 +483,181 @@
 const video = document.getElementById('videoPreview');
 let trimStart = 0, trimEnd = 0, currentTool = 'trim', isDragging = false, dragSide = '';
 
-// ========== LOAD VIDEO ==========
 function loadVideo(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   const url = URL.createObjectURL(file);
   video.src = url;
   video.style.display = 'block';
   document.getElementById('uploadZone').style.display = 'none';
   document.getElementById('videoContainer').classList.add('show');
   document.getElementById('timelineArea').classList.add('show');
-
-  // Adjust layout for timeline
-  document.querySelector('.editor-layout').style.height = 'calc(100vh - 52px - 140px)';
+  document.querySelector('.editor-layout').style.height = 'calc(100vh - 54px - 130px)';
 
   video.onloadedmetadata = () => {
     trimEnd = video.duration;
     document.getElementById('trimEnd').value = trimEnd.toFixed(1);
     updateTrim();
     updateVideoInfo(file);
-
-    // Setup timeline clip
     const clip = document.getElementById('timelineClip');
-    clip.style.left = '0%';
-    clip.style.width = '100%';
+    clip.style.left = '0%'; clip.style.width = '100%';
   };
-
   video.ontimeupdate = () => {
-    updateTimeDisplay();
-    updatePlayhead();
-
-    // Stop at trim end
-    if (video.currentTime >= trimEnd) {
-      video.pause();
-      document.getElementById('playBtn').innerHTML = '&#9654;';
-    }
+    updateTimeDisplay(); updatePlayhead();
+    if (video.currentTime >= trimEnd) { video.pause(); document.getElementById('playBtn').innerHTML = '&#9654;'; }
   };
 }
 
-// Drag and drop
 document.getElementById('previewArea').addEventListener('dragover', (e) => { e.preventDefault(); });
 document.getElementById('previewArea').addEventListener('drop', (e) => {
   e.preventDefault();
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('video/')) {
-    const dt = new DataTransfer();
-    dt.items.add(file);
+    const dt = new DataTransfer(); dt.items.add(file);
     document.getElementById('fileInput').files = dt.files;
     loadVideo({ target: { files: [file] } });
   }
 });
 
 function updateVideoInfo(file) {
-  const info = document.getElementById('videoInfo');
   const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-  info.innerHTML = `
-    <span>${file.name.substring(0,20)}${file.name.length > 20 ? '...' : ''}</span>
-    <span>${sizeMB} MB</span>
-    <span>${formatTime(video.duration)}</span>
-    <span>${video.videoWidth}x${video.videoHeight}</span>
-  `;
+  document.getElementById('videoInfo').innerHTML =
+    `<span>${file.name.substring(0,18)}${file.name.length>18?'...':''}</span>
+     <span>${sizeMB} MB</span><span>${formatTime(video.duration)}</span>
+     <span>${video.videoWidth}x${video.videoHeight}</span>`;
 }
 
-// ========== PLAYER CONTROLS ==========
 function togglePlay() {
   if (video.paused) {
     if (video.currentTime < trimStart) video.currentTime = trimStart;
-    video.play();
-    document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
-  } else {
-    video.pause();
-    document.getElementById('playBtn').innerHTML = '&#9654;';
-  }
+    video.play(); document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
+  } else { video.pause(); document.getElementById('playBtn').innerHTML = '&#9654;'; }
 }
-
 function skipTime(sec) { video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + sec)); }
-
 function toggleMute() {
   video.muted = !video.muted;
-  document.getElementById('muteBtn').innerHTML = video.muted ? '&#128263;' : '&#128264;';
-  document.getElementById('muteToggleBtn').innerHTML = video.muted ? '&#128263; Com Som' : '&#128264; Silenciar';
+  document.getElementById('muteToggleBtn').textContent = video.muted ? 'Ativar Audio' : 'Silenciar Audio';
 }
-
 function setVolume(val) { video.volume = val; }
-
 function formatTime(sec) {
   if (!sec || isNaN(sec)) return '00:00';
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  return `${Math.floor(sec/60).toString().padStart(2,'0')}:${Math.floor(sec%60).toString().padStart(2,'0')}`;
 }
-
 function updateTimeDisplay() {
-  document.getElementById('timeDisplay').textContent =
-    `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+  document.getElementById('timeDisplay').textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
 }
 
-// ========== TOOLS ==========
 function setTool(tool, btn) {
   currentTool = tool;
-  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-
-  ['propTrim','propText','propSpeed','propFilter','propAudio'].forEach(id => {
-    document.getElementById(id).style.display = 'none';
-  });
-
-  const propMap = { trim: 'propTrim', text: 'propText', speed: 'propSpeed', filter: 'propFilter', audio: 'propAudio' };
-  if (propMap[tool]) document.getElementById(propMap[tool]).style.display = 'block';
+  ['propTrim','propText','propSpeed','propFilter','propAudio'].forEach(id => document.getElementById(id).style.display = 'none');
+  const map = { trim:'propTrim', text:'propText', speed:'propSpeed', filter:'propFilter', audio:'propAudio' };
+  if (map[tool]) document.getElementById(map[tool]).style.display = 'block';
 }
 
-// ========== TRIM ==========
 function updateTrim() {
   trimStart = parseFloat(document.getElementById('trimStart').value) || 0;
   trimEnd = parseFloat(document.getElementById('trimEnd').value) || video.duration || 0;
   const dur = Math.max(0, trimEnd - trimStart);
   document.getElementById('trimDuration').value = `${dur.toFixed(1)}s (${formatTime(dur)})`;
-
-  // Update timeline
   if (video.duration) {
     const clip = document.getElementById('timelineClip');
-    clip.style.left = (trimStart / video.duration * 100) + '%';
-    clip.style.width = ((trimEnd - trimStart) / video.duration * 100) + '%';
+    clip.style.left = (trimStart/video.duration*100)+'%';
+    clip.style.width = ((trimEnd-trimStart)/video.duration*100)+'%';
   }
-
   document.getElementById('tlStart').textContent = formatTime(trimStart);
   document.getElementById('tlEnd').textContent = formatTime(trimEnd);
   document.getElementById('tlDur').textContent = formatTime(trimEnd - trimStart);
 }
+function previewTrim() { video.currentTime = trimStart; video.play(); document.getElementById('playBtn').innerHTML = '&#9646;&#9646;'; }
 
-function previewTrim() {
-  video.currentTime = trimStart;
-  video.play();
-  document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
-}
-
-// ========== TIMELINE ==========
 function updatePlayhead() {
   if (!video.duration) return;
-  const pct = (video.currentTime / video.duration) * 100;
-  document.getElementById('playhead').style.left = pct + '%';
+  document.getElementById('playhead').style.left = (video.currentTime/video.duration*100)+'%';
 }
-
 function timelineSeek(e) {
   if (isDragging) return;
-  const track = document.getElementById('timelineTrack');
-  const rect = track.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  video.currentTime = pct * video.duration;
+  const rect = document.getElementById('timelineTrack').getBoundingClientRect();
+  video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
 }
-
 function startTrimDrag(e, side) {
-  e.stopPropagation();
-  isDragging = true;
-  dragSide = side;
-
+  e.stopPropagation(); isDragging = true; dragSide = side;
   const onMove = (ev) => {
-    const track = document.getElementById('timelineTrack');
-    const rect = track.getBoundingClientRect();
+    const rect = document.getElementById('timelineTrack').getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
     const time = pct * video.duration;
-
-    if (dragSide === 'left') {
-      trimStart = Math.min(time, trimEnd - 0.5);
-      document.getElementById('trimStart').value = trimStart.toFixed(1);
-    } else {
-      trimEnd = Math.max(time, trimStart + 0.5);
-      document.getElementById('trimEnd').value = trimEnd.toFixed(1);
-    }
+    if (dragSide === 'left') { trimStart = Math.min(time, trimEnd-0.5); document.getElementById('trimStart').value = trimStart.toFixed(1); }
+    else { trimEnd = Math.max(time, trimStart+0.5); document.getElementById('trimEnd').value = trimEnd.toFixed(1); }
     updateTrim();
   };
-
-  const onUp = () => {
-    isDragging = false;
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-  };
-
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
+  const onUp = () => { isDragging = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
 }
 
-// ========== TEXT ==========
 function updateText() {
-  const overlay = document.getElementById('textOverlay');
-  overlay.textContent = document.getElementById('textContent').value;
-  overlay.style.fontSize = document.getElementById('textSize').value + 'px';
-  overlay.style.color = document.getElementById('textColor').value;
-  overlay.style.fontFamily = document.getElementById('textFont').value;
-  overlay.style.background = document.getElementById('textBg').value;
-  overlay.style.borderRadius = document.getElementById('textBg').value !== 'none' ? '8px' : '0';
+  const o = document.getElementById('textOverlay');
+  o.textContent = document.getElementById('textContent').value;
+  o.style.fontSize = document.getElementById('textSize').value + 'px';
+  o.style.color = document.getElementById('textColor').value;
+  o.style.fontFamily = document.getElementById('textFont').value;
+  o.style.background = document.getElementById('textBg').value;
+  o.style.borderRadius = document.getElementById('textBg').value !== 'none' ? '10px' : '0';
 }
-
 function toggleTextOverlay() {
-  const overlay = document.getElementById('textOverlay');
-  const btn = document.getElementById('textToggleBtn');
-  overlay.classList.toggle('show');
-  btn.textContent = overlay.classList.contains('show') ? 'Esconder Texto' : 'Mostrar Texto';
+  const o = document.getElementById('textOverlay'); const b = document.getElementById('textToggleBtn');
+  o.classList.toggle('show'); b.textContent = o.classList.contains('show') ? 'Esconder Texto' : 'Mostrar Texto';
 }
-
-// Drag text
 let textDrag = false, textX = 0, textY = 0;
-document.getElementById('textOverlay').addEventListener('mousedown', (e) => {
-  textDrag = true;
-  textX = e.offsetX;
-  textY = e.offsetY;
-});
+document.getElementById('textOverlay').addEventListener('mousedown', (e) => { textDrag = true; textX = e.offsetX; textY = e.offsetY; });
 document.addEventListener('mousemove', (e) => {
-  if (!textDrag) return;
-  const overlay = document.getElementById('textOverlay');
-  const container = document.getElementById('videoContainer');
-  const rect = container.getBoundingClientRect();
-  overlay.style.left = (e.clientX - rect.left - textX) + 'px';
-  overlay.style.top = (e.clientY - rect.top - textY) + 'px';
+  if (!textDrag) return; const o = document.getElementById('textOverlay');
+  const r = document.getElementById('videoContainer').getBoundingClientRect();
+  o.style.left = (e.clientX-r.left-textX)+'px'; o.style.top = (e.clientY-r.top-textY)+'px';
 });
 document.addEventListener('mouseup', () => { textDrag = false; });
 
-// ========== SPEED ==========
-function setSpeed(val) {
-  video.playbackRate = parseFloat(val);
-  document.getElementById('speedSlider').value = val;
-  document.getElementById('speedLabel').textContent = val + 'x';
-}
-
-// ========== FILTERS ==========
-function setFilter(filter) {
-  video.style.filter = filter;
-  // Reset sliders
-  if (filter === 'none') {
-    document.getElementById('brightnessSlider').value = 100;
-    document.getElementById('contrastSlider').value = 100;
-    document.getElementById('saturationSlider').value = 100;
-  }
-}
-
+function setSpeed(val) { video.playbackRate = parseFloat(val); document.getElementById('speedSlider').value = val; document.getElementById('speedLabel').textContent = val+'x'; }
+function setFilter(f) { video.style.filter = f; if(f==='none'){document.getElementById('brightnessSlider').value=100;document.getElementById('contrastSlider').value=100;document.getElementById('saturationSlider').value=100;} }
 function applyCustomFilter() {
-  const b = document.getElementById('brightnessSlider').value;
-  const c = document.getElementById('contrastSlider').value;
-  const s = document.getElementById('saturationSlider').value;
-  video.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  video.style.filter = `brightness(${document.getElementById('brightnessSlider').value}%) contrast(${document.getElementById('contrastSlider').value}%) saturate(${document.getElementById('saturationSlider').value}%)`;
 }
+function setAudioVol(val) { video.volume=val/100; document.getElementById('audioVolLabel').textContent=val+'%'; document.getElementById('volumeSlider').value=val/100; }
 
-// ========== AUDIO ==========
-function setAudioVol(val) {
-  video.volume = val / 100;
-  document.getElementById('audioVolLabel').textContent = val + '%';
-  document.getElementById('volumeSlider').value = val / 100;
-}
-
-// ========== EXPORT ==========
 function exportVideo() {
   if (!video.src) { alert('Carregue um video primeiro!'); return; }
-
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
-
-  // Draw current frame with filters
-  ctx.filter = video.style.filter || 'none';
-  ctx.drawImage(video, 0, 0);
-
-  // Draw text if visible
+  ctx.filter = video.style.filter || 'none'; ctx.drawImage(video, 0, 0);
   const overlay = document.getElementById('textOverlay');
   if (overlay.classList.contains('show')) {
     ctx.font = `${document.getElementById('textSize').value}px ${document.getElementById('textFont').value}`;
-    ctx.fillStyle = document.getElementById('textColor').value;
-    ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 4;
-    ctx.fillText(overlay.textContent, canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = document.getElementById('textColor').value; ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4;
+    ctx.fillText(overlay.textContent, canvas.width/2, canvas.height/2);
   }
-
-  // Record video with MediaRecorder
   const stream = canvas.captureStream(30);
-  // Add audio
-  if (video.captureStream) {
-    const audioTracks = video.captureStream().getAudioTracks();
-    audioTracks.forEach(t => stream.addTrack(t));
-  }
-
-  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-  const chunks = [];
-
-  recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  if (video.captureStream) { video.captureStream().getAudioTracks().forEach(t => stream.addTrack(t)); }
+  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); const chunks = [];
+  recorder.ondataavailable = (e) => { if(e.data.size) chunks.push(e.data); };
   recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'videocut-export.webm';
-    a.click();
-    URL.revokeObjectURL(url);
+    const blob = new Blob(chunks, {type:'video/webm'}); const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'videocut-export.webm'; a.click();
   };
-
-  // Play trimmed section and record
-  video.currentTime = trimStart;
-  video.play();
-  recorder.start();
-
-  const drawFrame = () => {
-    if (video.currentTime >= trimEnd || video.paused) {
-      recorder.stop();
-      video.pause();
-      document.getElementById('playBtn').innerHTML = '&#9654;';
-      return;
-    }
-    ctx.filter = video.style.filter || 'none';
-    ctx.drawImage(video, 0, 0);
-
+  video.currentTime = trimStart; video.play(); recorder.start();
+  const draw = () => {
+    if (video.currentTime >= trimEnd || video.paused) { recorder.stop(); video.pause(); document.getElementById('playBtn').innerHTML='&#9654;'; return; }
+    ctx.filter = video.style.filter || 'none'; ctx.drawImage(video, 0, 0);
     if (overlay.classList.contains('show')) {
       ctx.font = `${document.getElementById('textSize').value}px ${document.getElementById('textFont').value}`;
-      ctx.fillStyle = document.getElementById('textColor').value;
-      ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 4;
-      ctx.fillText(overlay.textContent, canvas.width / 2, canvas.height / 2);
+      ctx.fillStyle = document.getElementById('textColor').value; ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4;
+      ctx.fillText(overlay.textContent, canvas.width/2, canvas.height/2);
     }
-
-    requestAnimationFrame(drawFrame);
-  };
-  drawFrame();
+    requestAnimationFrame(draw);
+  }; draw();
 }
 
-// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
