@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VideoCut Pro - Editor de Video Online</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d0d12; color: #e0e0e0; min-height: 100vh; overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: #141420; padding: 12px 24px; display: flex; justify-content: space-between;
+      align-items: center; border-bottom: 1px solid #ffffff10;
+    }
+    .logo { font-size: 1.2rem; font-weight: 700; color: #fff; }
+    .logo span { color: #ff4d6a; }
+    .header-actions { display: flex; gap: 8px; }
+    .btn-header {
+      padding: 8px 18px; border: 1px solid #ffffff15; border-radius: 8px;
+      background: transparent; color: #aaa; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;
+    }
+    .btn-header:hover { border-color: #ff4d6a; color: #ff4d6a; }
+    .btn-export {
+      padding: 8px 18px; border: none; border-radius: 8px; border-radius: 8px;
+      background: linear-gradient(135deg, #ff4d6a, #ff2d50); color: #fff;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border-radius: 8px;
+    }
+    .btn-export:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,77,106,0.4); }
+
+    /* Main Layout */
+    .editor-layout {
+      display: grid; grid-template-columns: 260px 1fr 260px; height: calc(100vh - 52px);
+    }
+
+    /* Sidebar Left - Tools */
+    .sidebar {
+      background: #141420; border-right: 1px solid #ffffff10; padding: 16px;
+      overflow-y: auto;
+    }
+    .sidebar h3 {
+      font-size: 0.7rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 12px; margin-top: 16px;
+    }
+    .sidebar h3:first-child { margin-top: 0; }
+    .tool-btn {
+      width: 100%; padding: 10px 14px; border: 1px solid #ffffff10; border-radius: 10px;
+      background: rgba(255,255,255,0.03); color: #ccc; font-size: 0.85rem; cursor: pointer;
+      transition: all 0.3s; margin-bottom: 6px; text-align: left; display: flex;
+      align-items: center; gap: 10px;
+    }
+    .tool-btn:hover { border-color: #ff4d6a44; background: rgba(255,77,106,0.08); color: #fff; }
+    .tool-btn.active { border-color: #ff4d6a; background: rgba(255,77,106,0.12); color: #ff4d6a; }
+    .tool-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+    /* Center - Preview */
+    .preview-area {
+      background: #0a0a0f; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; position: relative; overflow: hidden;
+    }
+    .upload-zone {
+      text-align: center; padding: 60px; border: 2px dashed #ffffff15; border-radius: 20px;
+      cursor: pointer; transition: all 0.3s; max-width: 500px;
+    }
+    .upload-zone:hover { border-color: #ff4d6a44; background: rgba(255,77,106,0.04); }
+    .upload-zone .icon { font-size: 3.5rem; margin-bottom: 15px; }
+    .upload-zone h3 { color: #fff; font-weight: 400; margin-bottom: 8px; }
+    .upload-zone p { color: #ffffff44; font-size: 0.85rem; }
+    .upload-zone .formats { color: #ffffff33; font-size: 0.75rem; margin-top: 12px; }
+
+    #videoPreview {
+      display: none; max-width: 100%; max-height: calc(100% - 20px); border-radius: 8px;
+      background: #000;
+    }
+    .video-container { display: none; width: 100%; height: 100%; position: relative; }
+    .video-container.show { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+    /* Text overlay */
+    .text-overlay {
+      position: absolute; color: #fff; font-size: 2rem; font-weight: 700; cursor: move;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8); user-select: none; display: none;
+      padding: 8px 16px;
+    }
+    .text-overlay.show { display: block; }
+
+    /* Player Controls */
+    .player-controls {
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px; align-items: center; background: rgba(0,0,0,0.7);
+      padding: 8px 16px; border-radius: 12px; backdrop-filter: blur(10px);
+    }
+    .ctrl-btn {
+      width: 36px; height: 36px; border: none; border-radius: 8px;
+      background: rgba(255,255,255,0.1); color: #fff; font-size: 1rem;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+    }
+    .ctrl-btn:hover { background: #ff4d6a; }
+    .time-display { color: #ffffff88; font-size: 0.75rem; font-family: monospace; min-width: 100px; text-align: center; }
+
+    /* Sidebar Right - Properties */
+    .properties {
+      background: #141420; border-left: 1px solid #ffffff10; padding: 16px; overflow-y: auto;
+    }
+    .prop-section { margin-bottom: 20px; }
+    .prop-section h3 {
+      font-size: 0.7rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .prop-row { margin-bottom: 10px; }
+    .prop-row label { font-size: 0.75rem; color: #ffffff55; display: block; margin-bottom: 4px; }
+    .prop-row input[type="text"], .prop-row input[type="number"], .prop-row select, .prop-row input[type="color"] {
+      width: 100%; padding: 8px 12px; border: 1px solid #ffffff12; border-radius: 8px;
+      background: rgba(255,255,255,0.05); color: #fff; font-size: 0.85rem; outline: none;
+    }
+    .prop-row input:focus, .prop-row select:focus { border-color: #ff4d6a; }
+    .prop-row input[type="range"] { width: 100%; accent-color: #ff4d6a; }
+    .prop-row input[type="color"] { height: 36px; padding: 4px; cursor: pointer; }
+
+    /* Timeline */
+    .timeline-area {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 140px;
+      background: #141420; border-top: 1px solid #ffffff10; padding: 12px 20px;
+      display: none; z-index: 50;
+    }
+    .timeline-area.show { display: block; }
+    .timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .timeline-header h4 { font-size: 0.75rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 2px; }
+
+    .timeline-track {
+      position: relative; height: 50px; background: #0d0d12; border-radius: 8px;
+      overflow: hidden; cursor: pointer;
+    }
+    .timeline-clip {
+      position: absolute; top: 4px; height: 42px; background: linear-gradient(135deg, #ff4d6a33, #ff4d6a11);
+      border: 1px solid #ff4d6a44; border-radius: 6px; display: flex; align-items: center;
+      padding: 0 10px; font-size: 0.75rem; color: #ff4d6a;
+    }
+    .timeline-playhead {
+      position: absolute; top: 0; width: 2px; height: 100%; background: #ff4d6a;
+      z-index: 10; pointer-events: none; transition: left 0.1s linear;
+    }
+
+    /* Trim handles */
+    .trim-handle {
+      position: absolute; top: 0; width: 12px; height: 100%; cursor: col-resize;
+      z-index: 20; display: flex; align-items: center; justify-content: center;
+    }
+    .trim-handle-left { left: 0; background: linear-gradient(90deg, #ff4d6a, transparent); border-radius: 6px 0 0 6px; }
+    .trim-handle-right { right: 0; background: linear-gradient(-90deg, #ff4d6a, transparent); border-radius: 0 6px 6px 0; }
+    .trim-handle::after { content: '||'; font-size: 0.5rem; color: #fff; }
+
+    .trim-info {
+      display: flex; gap: 15px; margin-top: 8px; font-size: 0.8rem; color: #ffffff55;
+    }
+    .trim-info span strong { color: #ff4d6a; }
+
+    /* Info bar */
+    .video-info {
+      display: flex; gap: 15px; padding: 8px 0; font-size: 0.75rem; color: #ffffff44;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .editor-layout { grid-template-columns: 1fr; }
+      .sidebar, .properties { display: none; }
+      .timeline-area { height: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Video<span>Cut</span> Pro</div>
+  <div class="header-actions">
+    <button class="btn-header" onclick="document.getElementById('fileInput').click()">Abrir Video</button>
+    <button class="btn-export" onclick="exportVideo()">Exportar</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="video/*" style="display:none" onchange="loadVideo(event)">
+
+<div class="editor-layout" style="height: calc(100vh - 52px);">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <h3>Ferramentas</h3>
+    <button class="tool-btn active" onclick="setTool('trim', this)"><span class="tool-icon">&#9986;</span> Cortar / Aparar</button>
+    <button class="tool-btn" onclick="setTool('text', this)"><span class="tool-icon">T</span> Adicionar Texto</button>
+    <button class="tool-btn" onclick="setTool('speed', this)"><span class="tool-icon">&#9654;</span> Velocidade</button>
+    <button class="tool-btn" onclick="setTool('filter', this)"><span class="tool-icon">&#127912;</span> Filtros</button>
+    <button class="tool-btn" onclick="setTool('audio', this)"><span class="tool-icon">&#127925;</span> Audio</button>
+
+    <h3>Informacoes</h3>
+    <div class="video-info" id="videoInfo">
+      <span>Nenhum video carregado</span>
+    </div>
+  </div>
+
+  <!-- CENTER - PREVIEW -->
+  <div class="preview-area" id="previewArea">
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">&#127916;</div>
+      <h3>Arraste ou clique para importar</h3>
+      <p>Selecione um video do seu computador</p>
+      <div class="formats">MP4 | MOV | AVI | WebM | MKV</div>
+    </div>
+
+    <div class="video-container" id="videoContainer">
+      <video id="videoPreview" onclick="togglePlay()"></video>
+      <div class="text-overlay" id="textOverlay">Seu Texto</div>
+      <div class="player-controls">
+        <button class="ctrl-btn" onclick="skipTime(-5)">&#9194;</button>
+        <button class="ctrl-btn" onclick="togglePlay()" id="playBtn">&#9654;</button>
+        <button class="ctrl-btn" onclick="skipTime(5)">&#9193;</button>
+        <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+        <button class="ctrl-btn" onclick="toggleMute()" id="muteBtn">&#128264;</button>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" style="width:60px;accent-color:#ff4d6a;" onchange="setVolume(this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR - PROPERTIES -->
+  <div class="properties">
+    <!-- Trim Properties -->
+    <div class="prop-section" id="propTrim">
+      <h3>Cortar Video</h3>
+      <div class="prop-row">
+        <label>Inicio (segundos)</label>
+        <input type="number" id="trimStart" value="0" min="0" step="0.1" onchange="updateTrim()">
+      </div>
+      <div class="prop-row">
+        <label>Fim (segundos)</label>
+        <input type="number" id="trimEnd" value="0" min="0" step="0.1" onchange="updateTrim()">
+      </div>
+      <div class="prop-row">
+        <label>Duracao do corte</label>
+        <input type="text" id="trimDuration" readonly style="color:#ff4d6a;">
+      </div>
+      <button class="tool-btn" onclick="previewTrim()" style="margin-top:10px;justify-content:center;">&#9654; Pre-visualizar Corte</button>
+    </div>
+
+    <!-- Text Properties -->
+    <div class="prop-section" id="propText" style="display:none;">
+      <h3>Texto</h3>
+      <div class="prop-row">
+        <label>Conteudo</label>
+        <input type="text" id="textContent" value="Seu Texto" oninput="updateText()">
+      </div>
+      <div class="prop-row">
+        <label>Tamanho (px)</label>
+        <input type="range" id="textSize" min="12" max="120" value="36" oninput="updateText()">
+      </div>
+      <div class="prop-row">
+        <label>Cor</label>
+        <input type="color" id="textColor" value="#ffffff" oninput="updateText()">
+      </div>
+      <div class="prop-row">
+        <label>Fonte</label>
+        <select id="textFont" onchange="updateText()">
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Georgia', serif">Georgia</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="Impact, sans-serif">Impact</option>
+          <option value="'Comic Sans MS', cursive">Comic Sans</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label>Fundo do texto</label>
+        <select id="textBg" onchange="updateText()">
+          <option value="none">Nenhum</option>
+          <option value="rgba(0,0,0,0.5)">Preto semi-transparente</option>
+          <option value="rgba(255,77,106,0.7)">Vermelho</option>
+          <option value="rgba(0,0,0,0.8)">Preto forte</option>
+        </select>
+      </div>
+      <button class="tool-btn" onclick="toggleTextOverlay()" style="margin-top:10px;justify-content:center;" id="textToggleBtn">Mostrar Texto</button>
+    </div>
+
+    <!-- Speed Properties -->
+    <div class="prop-section" id="propSpeed" style="display:none;">
+      <h3>Velocidade</h3>
+      <div class="prop-row">
+        <label>Velocidade: <strong id="speedLabel">1.0x</strong></label>
+        <input type="range" id="speedSlider" min="0.25" max="3" step="0.25" value="1" oninput="setSpeed(this.value)">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(0.5)">0.5x</button>
+        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(1)">1x</button>
+        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(1.5)">1.5x</button>
+        <button class="tool-btn" style="width:auto;padding:6px 12px;font-size:0.75rem;" onclick="setSpeed(2)">2x</button>
+      </div>
+    </div>
+
+    <!-- Filter Properties -->
+    <div class="prop-section" id="propFilter" style="display:none;">
+      <h3>Filtros</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('none')">Normal</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('grayscale(100%)')">P&B</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('sepia(100%)')">Sepia</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('contrast(150%)')">Contraste</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('brightness(130%)')">Brilho+</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('brightness(70%)')">Brilho-</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('saturate(200%)')">Saturacao+</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('hue-rotate(90deg)')">Hue Rotate</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('invert(100%)')">Inverter</button>
+        <button class="tool-btn" style="justify-content:center;font-size:0.75rem;" onclick="setFilter('blur(2px)')">Blur</button>
+      </div>
+      <div class="prop-row" style="margin-top:12px;">
+        <label>Brilho</label>
+        <input type="range" id="brightnessSlider" min="50" max="200" value="100" oninput="applyCustomFilter()">
+      </div>
+      <div class="prop-row">
+        <label>Contraste</label>
+        <input type="range" id="contrastSlider" min="50" max="200" value="100" oninput="applyCustomFilter()">
+      </div>
+      <div class="prop-row">
+        <label>Saturacao</label>
+        <input type="range" id="saturationSlider" min="0" max="300" value="100" oninput="applyCustomFilter()">
+      </div>
+    </div>
+
+    <!-- Audio Properties -->
+    <div class="prop-section" id="propAudio" style="display:none;">
+      <h3>Audio</h3>
+      <div class="prop-row">
+        <label>Volume: <strong id="audioVolLabel">100%</strong></label>
+        <input type="range" id="audioVolSlider" min="0" max="100" value="100" oninput="setAudioVol(this.value)">
+      </div>
+      <button class="tool-btn" onclick="toggleMute()" style="margin-top:8px;justify-content:center;" id="muteToggleBtn">&#128264; Silenciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<div class="timeline-area" id="timelineArea">
+  <div class="timeline-header">
+    <h4>Timeline</h4>
+    <div class="trim-info" id="trimInfo">
+      <span>Inicio: <strong id="tlStart">00:00</strong></span>
+      <span>Fim: <strong id="tlEnd">00:00</strong></span>
+      <span>Duracao: <strong id="tlDur">00:00</strong></span>
+    </div>
+  </div>
+  <div class="timeline-track" id="timelineTrack" onmousedown="timelineSeek(event)">
+    <div class="timeline-clip" id="timelineClip">
+      <div class="trim-handle trim-handle-left" onmousedown="startTrimDrag(event, 'left')"></div>
+      <span id="clipLabel">Video</span>
+      <div class="trim-handle trim-handle-right" onmousedown="startTrimDrag(event, 'right')"></div>
+    </div>
+    <div class="timeline-playhead" id="playhead"></div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('videoPreview');
+let trimStart = 0, trimEnd = 0, currentTool = 'trim', isDragging = false, dragSide = '';
+
+// ========== LOAD VIDEO ==========
+function loadVideo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  video.src = url;
+  video.style.display = 'block';
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('videoContainer').classList.add('show');
+  document.getElementById('timelineArea').classList.add('show');
+
+  // Adjust layout for timeline
+  document.querySelector('.editor-layout').style.height = 'calc(100vh - 52px - 140px)';
+
+  video.onloadedmetadata = () => {
+    trimEnd = video.duration;
+    document.getElementById('trimEnd').value = trimEnd.toFixed(1);
+    updateTrim();
+    updateVideoInfo(file);
+
+    // Setup timeline clip
+    const clip = document.getElementById('timelineClip');
+    clip.style.left = '0%';
+    clip.style.width = '100%';
+  };
+
+  video.ontimeupdate = () => {
+    updateTimeDisplay();
+    updatePlayhead();
+
+    // Stop at trim end
+    if (video.currentTime >= trimEnd) {
+      video.pause();
+      document.getElementById('playBtn').innerHTML = '&#9654;';
+    }
+  };
+}
+
+// Drag and drop
+document.getElementById('previewArea').addEventListener('dragover', (e) => { e.preventDefault(); });
+document.getElementById('previewArea').addEventListener('drop', (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    loadVideo({ target: { files: [file] } });
+  }
+});
+
+function updateVideoInfo(file) {
+  const info = document.getElementById('videoInfo');
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+  info.innerHTML = `
+    <span>${file.name.substring(0,20)}${file.name.length > 20 ? '...' : ''}</span>
+    <span>${sizeMB} MB</span>
+    <span>${formatTime(video.duration)}</span>
+    <span>${video.videoWidth}x${video.videoHeight}</span>
+  `;
+}
+
+// ========== PLAYER CONTROLS ==========
+function togglePlay() {
+  if (video.paused) {
+    if (video.currentTime < trimStart) video.currentTime = trimStart;
+    video.play();
+    document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
+  } else {
+    video.pause();
+    document.getElementById('playBtn').innerHTML = '&#9654;';
+  }
+}
+
+function skipTime(sec) { video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + sec)); }
+
+function toggleMute() {
+  video.muted = !video.muted;
+  document.getElementById('muteBtn').innerHTML = video.muted ? '&#128263;' : '&#128264;';
+  document.getElementById('muteToggleBtn').innerHTML = video.muted ? '&#128263; Com Som' : '&#128264; Silenciar';
+}
+
+function setVolume(val) { video.volume = val; }
+
+function formatTime(sec) {
+  if (!sec || isNaN(sec)) return '00:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function updateTimeDisplay() {
+  document.getElementById('timeDisplay').textContent =
+    `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+}
+
+// ========== TOOLS ==========
+function setTool(tool, btn) {
+  currentTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  ['propTrim','propText','propSpeed','propFilter','propAudio'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  const propMap = { trim: 'propTrim', text: 'propText', speed: 'propSpeed', filter: 'propFilter', audio: 'propAudio' };
+  if (propMap[tool]) document.getElementById(propMap[tool]).style.display = 'block';
+}
+
+// ========== TRIM ==========
+function updateTrim() {
+  trimStart = parseFloat(document.getElementById('trimStart').value) || 0;
+  trimEnd = parseFloat(document.getElementById('trimEnd').value) || video.duration || 0;
+  const dur = Math.max(0, trimEnd - trimStart);
+  document.getElementById('trimDuration').value = `${dur.toFixed(1)}s (${formatTime(dur)})`;
+
+  // Update timeline
+  if (video.duration) {
+    const clip = document.getElementById('timelineClip');
+    clip.style.left = (trimStart / video.duration * 100) + '%';
+    clip.style.width = ((trimEnd - trimStart) / video.duration * 100) + '%';
+  }
+
+  document.getElementById('tlStart').textContent = formatTime(trimStart);
+  document.getElementById('tlEnd').textContent = formatTime(trimEnd);
+  document.getElementById('tlDur').textContent = formatTime(trimEnd - trimStart);
+}
+
+function previewTrim() {
+  video.currentTime = trimStart;
+  video.play();
+  document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
+}
+
+// ========== TIMELINE ==========
+function updatePlayhead() {
+  if (!video.duration) return;
+  const pct = (video.currentTime / video.duration) * 100;
+  document.getElementById('playhead').style.left = pct + '%';
+}
+
+function timelineSeek(e) {
+  if (isDragging) return;
+  const track = document.getElementById('timelineTrack');
+  const rect = track.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  video.currentTime = pct * video.duration;
+}
+
+function startTrimDrag(e, side) {
+  e.stopPropagation();
+  isDragging = true;
+  dragSide = side;
+
+  const onMove = (ev) => {
+    const track = document.getElementById('timelineTrack');
+    const rect = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+    const time = pct * video.duration;
+
+    if (dragSide === 'left') {
+      trimStart = Math.min(time, trimEnd - 0.5);
+      document.getElementById('trimStart').value = trimStart.toFixed(1);
+    } else {
+      trimEnd = Math.max(time, trimStart + 0.5);
+      document.getElementById('trimEnd').value = trimEnd.toFixed(1);
+    }
+    updateTrim();
+  };
+
+  const onUp = () => {
+    isDragging = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ========== TEXT ==========
+function updateText() {
+  const overlay = document.getElementById('textOverlay');
+  overlay.textContent = document.getElementById('textContent').value;
+  overlay.style.fontSize = document.getElementById('textSize').value + 'px';
+  overlay.style.color = document.getElementById('textColor').value;
+  overlay.style.fontFamily = document.getElementById('textFont').value;
+  overlay.style.background = document.getElementById('textBg').value;
+  overlay.style.borderRadius = document.getElementById('textBg').value !== 'none' ? '8px' : '0';
+}
+
+function toggleTextOverlay() {
+  const overlay = document.getElementById('textOverlay');
+  const btn = document.getElementById('textToggleBtn');
+  overlay.classList.toggle('show');
+  btn.textContent = overlay.classList.contains('show') ? 'Esconder Texto' : 'Mostrar Texto';
+}
+
+// Drag text
+let textDrag = false, textX = 0, textY = 0;
+document.getElementById('textOverlay').addEventListener('mousedown', (e) => {
+  textDrag = true;
+  textX = e.offsetX;
+  textY = e.offsetY;
+});
+document.addEventListener('mousemove', (e) => {
+  if (!textDrag) return;
+  const overlay = document.getElementById('textOverlay');
+  const container = document.getElementById('videoContainer');
+  const rect = container.getBoundingClientRect();
+  overlay.style.left = (e.clientX - rect.left - textX) + 'px';
+  overlay.style.top = (e.clientY - rect.top - textY) + 'px';
+});
+document.addEventListener('mouseup', () => { textDrag = false; });
+
+// ========== SPEED ==========
+function setSpeed(val) {
+  video.playbackRate = parseFloat(val);
+  document.getElementById('speedSlider').value = val;
+  document.getElementById('speedLabel').textContent = val + 'x';
+}
+
+// ========== FILTERS ==========
+function setFilter(filter) {
+  video.style.filter = filter;
+  // Reset sliders
+  if (filter === 'none') {
+    document.getElementById('brightnessSlider').value = 100;
+    document.getElementById('contrastSlider').value = 100;
+    document.getElementById('saturationSlider').value = 100;
+  }
+}
+
+function applyCustomFilter() {
+  const b = document.getElementById('brightnessSlider').value;
+  const c = document.getElementById('contrastSlider').value;
+  const s = document.getElementById('saturationSlider').value;
+  video.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+}
+
+// ========== AUDIO ==========
+function setAudioVol(val) {
+  video.volume = val / 100;
+  document.getElementById('audioVolLabel').textContent = val + '%';
+  document.getElementById('volumeSlider').value = val / 100;
+}
+
+// ========== EXPORT ==========
+function exportVideo() {
+  if (!video.src) { alert('Carregue um video primeiro!'); return; }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+
+  // Draw current frame with filters
+  ctx.filter = video.style.filter || 'none';
+  ctx.drawImage(video, 0, 0);
+
+  // Draw text if visible
+  const overlay = document.getElementById('textOverlay');
+  if (overlay.classList.contains('show')) {
+    ctx.font = `${document.getElementById('textSize').value}px ${document.getElementById('textFont').value}`;
+    ctx.fillStyle = document.getElementById('textColor').value;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(overlay.textContent, canvas.width / 2, canvas.height / 2);
+  }
+
+  // Record video with MediaRecorder
+  const stream = canvas.captureStream(30);
+  // Add audio
+  if (video.captureStream) {
+    const audioTracks = video.captureStream().getAudioTracks();
+    audioTracks.forEach(t => stream.addTrack(t));
+  }
+
+  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  const chunks = [];
+
+  recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'videocut-export.webm';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Play trimmed section and record
+  video.currentTime = trimStart;
+  video.play();
+  recorder.start();
+
+  const drawFrame = () => {
+    if (video.currentTime >= trimEnd || video.paused) {
+      recorder.stop();
+      video.pause();
+      document.getElementById('playBtn').innerHTML = '&#9654;';
+      return;
+    }
+    ctx.filter = video.style.filter || 'none';
+    ctx.drawImage(video, 0, 0);
+
+    if (overlay.classList.contains('show')) {
+      ctx.font = `${document.getElementById('textSize').value}px ${document.getElementById('textFont').value}`;
+      ctx.fillStyle = document.getElementById('textColor').value;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(overlay.textContent, canvas.width / 2, canvas.height / 2);
+    }
+
+    requestAnimationFrame(drawFrame);
+  };
+  drawFrame();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowLeft') skipTime(-5);
+  if (e.code === 'ArrowRight') skipTime(5);
+  if (e.code === 'KeyM') toggleMute();
+});
+</script>
+</body>
+</html>
