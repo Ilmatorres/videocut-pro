@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Auto Cutter - Corte Automático de Vídeos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 0 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #fe2c55, #25f4ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed #333;
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #111;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #fe2c55;
+            background: #1a1a1a;
+        }
+
+        .upload-area.dragover {
+            border-color: #25f4ee;
+            background: rgba(37, 244, 238, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-area h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            color: #666;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        /* Settings */
+        .settings {
+            background: #111;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .settings.visible {
+            display: block;
+        }
+
+        .settings h3 {
+            margin-bottom: 20px;
+            color: #25f4ee;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .setting-item label {
+            display: block;
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .setting-item input,
+        .setting-item select {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .setting-item input:focus,
+        .setting-item select:focus {
+            outline: none;
+            border-color: #fe2c55;
+        }
+
+        /* File Info */
+        .file-info {
+            background: #111;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-details h4 {
+            margin-bottom: 4px;
+        }
+
+        .file-details p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #fe2c55;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #fe2c55, #d91a40);
+            color: #fff;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(254, 44, 85, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-download {
+            background: #25f4ee;
+            color: #000;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+
+        /* Progress */
+        .progress-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .progress-section.visible {
+            display: block;
+        }
+
+        .progress-bar-container {
+            background: #1a1a1a;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #fe2c55, #25f4ee);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #888;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #333;
+            border-top-color: #25f4ee;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results */
+        .results-section {
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-header h3 {
+            color: #25f4ee;
+        }
+
+        .clips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .clip-card {
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .clip-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .clip-preview {
+            position: relative;
+            aspect-ratio: 9/16;
+            background: #000;
+        }
+
+        .clip-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .clip-rank {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #fe2c55;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .clip-info {
+            padding: 12px;
+        }
+
+        .clip-info h4 {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .clip-info p {
+            color: #666;
+            font-size: 0.75rem;
+            margin-bottom: 10px;
+        }
+
+        .clip-energy {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .energy-bar {
+            flex: 1;
+            height: 4px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #25f4ee, #fe2c55);
+            border-radius: 2px;
+        }
+
+        .energy-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .settings-grid { grid-template-columns: 1fr; }
+            .clips-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .upload-area { padding: 40px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>TikTok Auto Cutter</h1>
+            <p>Encontra os melhores momentos e corta automaticamente para o TikTok</p>
+        </div>
+
+        <!-- Upload -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">&#127916;</div>
+            <h3>Arraste seu v&iacute;deo aqui</h3>
+            <p>ou clique para selecionar &bull; MP4, AVI, MOV, MKV, WebM</p>
+            <input type="file" id="fileInput" accept="video/*">
+        </div>
+
+        <!-- File Info -->
+        <div class="file-info" id="fileInfo">
+            <div class="file-icon">&#127916;</div>
+            <div class="file-details">
+                <h4 id="fileName">video.mp4</h4>
+                <p id="fileSize">0 MB</p>
+            </div>
+            <button class="file-remove" id="fileRemove">&times;</button>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings" id="settings">
+            <h3>Configura&ccedil;&otilde;es</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>N&uacute;mero de Clips</label>
+                    <input type="number" id="numClips" value="5" min="1" max="20">
+                </div>
+                <div class="setting-item">
+                    <label>Dura&ccedil;&atilde;o (segundos)</label>
+                    <input type="number" id="clipDuration" value="30" min="15" max="60">
+                </div>
+                <div class="setting-item">
+                    <label>Formato</label>
+                    <select id="formatSelect">
+                        <option value="vertical">Vertical (9:16) - TikTok</option>
+                        <option value="horizontal">Horizontal (16:9)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Button -->
+        <button class="btn btn-primary" id="processBtn" disabled>
+            Cortar Melhores Momentos
+        </button>
+
+        <!-- Progress -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">
+                <span class="spinner"></span> Analisando v&iacute;deo...
+            </p>
+        </div>
+
+        <!-- Results -->
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h3 id="resultsTitle">Clips Gerados</h3>
+            </div>
+            <div class="clips-grid" id="clipsGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById("uploadArea");
+        const fileInput = document.getElementById("fileInput");
+        const fileInfo = document.getElementById("fileInfo");
+        const fileName = document.getElementById("fileName");
+        const fileSize = document.getElementById("fileSize");
+        const fileRemove = document.getElementById("fileRemove");
+        const settings = document.getElementById("settings");
+        const processBtn = document.getElementById("processBtn");
+        const progressSection = document.getElementById("progressSection");
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const resultsSection = document.getElementById("resultsSection");
+        const resultsTitle = document.getElementById("resultsTitle");
+        const clipsGrid = document.getElementById("clipsGrid");
+
+        let selectedFile = null;
+        let currentJobId = null;
+
+        // Upload area events
+        uploadArea.addEventListener("click", () => fileInput.click());
+
+        uploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadArea.classList.add("dragover");
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+            uploadArea.classList.remove("dragover");
+        });
+
+        uploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove("dragover");
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith("video/")) {
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener("change", (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        fileRemove.addEventListener("click", resetUpload);
+
+        function handleFile(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatSize(file.size);
+
+            uploadArea.style.display = "none";
+            fileInfo.classList.add("visible");
+            settings.classList.add("visible");
+            processBtn.disabled = false;
+            resultsSection.classList.remove("visible");
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            currentJobId = null;
+            fileInput.value = "";
+
+            uploadArea.style.display = "block";
+            fileInfo.classList.remove("visible");
+            settings.classList.remove("visible");
+            processBtn.disabled = true;
+            progressSection.classList.remove("visible");
+            resultsSection.classList.remove("visible");
+        }
+
+        function formatSize(bytes) {
+            if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + " GB";
+            if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + " MB";
+            return (bytes / 1024).toFixed(1) + " KB";
+        }
+
+        // Process video
+        processBtn.addEventListener("click", async () => {
+            if (!selectedFile) return;
+
+            processBtn.disabled = true;
+            progressSection.classList.add("visible");
+            resultsSection.classList.remove("visible");
+
+            try {
+                // Step 1: Upload
+                updateProgress(10, "Enviando v\u00eddeo...");
+                const formData = new FormData();
+                formData.append("video", selectedFile);
+
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const uploadData = await uploadRes.json();
+                if (!uploadRes.ok) throw new Error(uploadData.error);
+
+                currentJobId = uploadData.job_id;
+
+                // Step 2: Process
+                updateProgress(30, "Analisando \u00e1udio e detectando melhores momentos...");
+
+                const numClips = document.getElementById("numClips").value;
+                const clipDuration = document.getElementById("clipDuration").value;
+                const vertical = document.getElementById("formatSelect").value === "vertical";
+
+                const processRes = await fetch(`/api/process/${currentJobId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        num_clips: parseInt(numClips),
+                        clip_duration: parseInt(clipDuration),
+                        vertical: vertical
+                    })
+                });
+
+                updateProgress(80, "Gerando clips...");
+
+                const processData = await processRes.json();
+                if (!processRes.ok) throw new Error(processData.error);
+
+                updateProgress(100, "Conclu\u00eddo!");
+
+                // Show results
+                setTimeout(() => {
+                    showResults(processData);
+                    progressSection.classList.remove("visible");
+                    processBtn.disabled = false;
+                }, 500);
+
+            } catch (error) {
+                updateProgress(0, "Erro: " + error.message);
+                processBtn.disabled = false;
+            }
+        });
+
+        function updateProgress(percent, text) {
+            progressBar.style.width = percent + "%";
+            const spinnerHTML = percent < 100 ? '<span class="spinner"></span> ' : '';
+            progressText.innerHTML = spinnerHTML + text;
+        }
+
+        function showResults(data) {
+            resultsSection.classList.add("visible");
+            resultsTitle.textContent = `${data.total_clips} Clips Gerados`;
+            clipsGrid.innerHTML = "";
+
+            const maxEnergy = Math.max(...data.clips.map(c => c.energy_score), 0.001);
+
+            data.clips.forEach((clip, index) => {
+                const energyPercent = Math.round((clip.energy_score / maxEnergy) * 100);
+                const card = document.createElement("div");
+                card.className = "clip-card";
+                card.innerHTML = `
+                    <div class="clip-preview">
+                        <video src="${clip.url}" preload="metadata"
+                            onclick="this.paused ? this.play() : this.pause()"
+                            loop playsinline muted></video>
+                        <div class="clip-rank">${index + 1}</div>
+                    </div>
+                    <div class="clip-info">
+                        <h4>Clip ${index + 1}</h4>
+                        <p>${formatTime(clip.start)} - ${formatTime(clip.end)} (${clip.duration}s)</p>
+                        <div class="clip-energy">
+                            <div class="energy-bar">
+                                <div class="energy-fill" style="width: ${energyPercent}%"></div>
+                            </div>
+                            <span class="energy-label">${energyPercent}%</span>
+                        </div>
+                        <a href="${clip.url}" download class="btn btn-download">
+                            Download
+                        </a>
+                    </div>
+                `;
+                clipsGrid.appendChild(card);
+            });
+        }
+
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec.toString().padStart(2, "0")}`;
+        }
+    </script>
+</body>
+</html>
